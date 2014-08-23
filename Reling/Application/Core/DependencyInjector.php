@@ -1,13 +1,14 @@
 <?php
 	namespace Reling\Application\Core;
 	
+	use Exception;
 	use ReflectionClass;
-	use ReflectionParameter;
+	use ReflectionException;
 
 	class DependencyInjector {
 	
-		private $dependencies = array();
-		private $instances    = array();
+		private $dependencies = [];
+		private $instances    = [];
 		
 		public function __construct($className) {
 			$this->getDependencies($className);					
@@ -18,7 +19,7 @@
 			
 			foreach($dependencies as $className => $deps) {			
 				
-				$classInstances = array();
+				$classInstances = [];
 				foreach($deps as $name => $dep) {
 					if(!isset($this->instances[$dep])) {
 						$reflection            = new ReflectionClass($dep);
@@ -26,14 +27,16 @@
 						$classInstances[]      = $this->instances[$dep];						
 					} else {
 						$classInstances[]      = $this->instances[$dep];
-					}				
-				}				
+					}
+				}
 				
 				if(!isset($this->instances[$className])) {
 					$reflection                  = new ReflectionClass($className);					
 					$this->instances[$className] = $reflection->newInstanceArgs($classInstances);
 				}
 			}
+
+			$this->dependencies = [];
 			
 			return $this;
 		}
@@ -49,15 +52,37 @@
 			
 			$parameters  = $constructor->getParameters();
 			if(!empty($parameters)) {
-				foreach($parameters as $parameter) {					
-					$this->dependencies[ucfirst($className)][ucfirst($parameter->name)] = ucfirst($parameter->name);
+				foreach($parameters as $parameter) {
+					try {
+						if($parameter->getClass() !== null) {
+							// use the parameters typehint
+							$dependencyValue = $parameter->getClass()->name;
+						} else {
+							// try using the parameters name as alias (as configured in app config)
+							$dependencyValue = ucfirst($parameter->name);
+						}
+					} catch(ReflectionException $ex) {
+						throw new Exception(sprintf('A constructor parameters type hinted class was not found in class "%s"!', $className), 0, $ex);
+					}
+
+					if(!class_exists($dependencyValue)) {
+						throw new Exception(sprintf('No class found to inject in class "%s"`s constructor parameter "%s"!', $className, $parameter->name));
+					}
+
+					$this->dependencies[ucfirst($className)][ucfirst($parameter->name)] = $dependencyValue;
 					
 					// Be aware of recursion !
-					$this->getDependencies($parameter->name);
-				}				
+					$this->getDependencies($dependencyValue);
+				}
 			}
 
-			$this->instances[$className] = $reflection->newInstanceArgs();
+			$this->resolve();
+
+			if($this->instances[$className]) {
+				return $this->instances[$className];
+			}
+
+			return null;
 		}
 	}
 ?>
