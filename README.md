@@ -15,4 +15,9 @@ There are some steps to install this repository:
 
 Start PHP Webserver (optional)
 
-    php -S localhost:8080
+    php -S localhost:8080 -t public
+
+
+Open the following url in your browser
+
+    http://localhost:8080
