@@ -17,7 +17,9 @@
 		
 		private function registerClassAliases() {
 			foreach($this->config['aliases'] as $alias => $original) {
-				class_alias($original, $alias);
+				if(!class_alias($original, $alias)) {
+                    throw new Exception(sprintf('Creation of alias "%s" for "%s" failed!', $alias, $original));
+                }
 			}
 		}
 		
