@@ -1,7 +1,9 @@
 <?php
 	namespace Reling\Application\Core;
 	
-	class Application {
+	use Exception;
+
+    class Application {
 	
 		private $config;
 	
