@@ -2,8 +2,8 @@
 	namespace Reling\Application\Core;
 	
 	use Exception;
-    use ReflectionClass;
-    use ReflectionException;
+	use ReflectionClass;
+	use ReflectionException;
 
 	class DependencyInjector {
 	
@@ -36,7 +36,7 @@
 				}
 			}
 
-            $this->dependencies = [];
+			$this->dependencies = [];
 			
 			return $this;
 		}
@@ -53,36 +53,36 @@
 			$parameters  = $constructor->getParameters();
 			if(!empty($parameters)) {
 				foreach($parameters as $parameter) {
-                    try {
-                        if($parameter->getClass() !== null) {
-                            // use the parameters typehint
-                            $dependencyValue = $parameter->getClass()->name;
-                        } else {
-                            // try using the parameters name as alias (as configured in app config)
-                            $dependencyValue = ucfirst($parameter->name);
-                        }
-                    } catch(ReflectionException $ex) {
-                        throw new Exception(sprintf('A constructor parameters type hinted class was not found in class "%s"!', $className), 0, $ex);
-                    }
+					try {
+						if($parameter->getClass() !== null) {
+							// use the parameters typehint
+							$dependencyValue = $parameter->getClass()->name;
+						} else {
+							// try using the parameters name as alias (as configured in app config)
+							$dependencyValue = ucfirst($parameter->name);
+						}
+					} catch(ReflectionException $ex) {
+						throw new Exception(sprintf('A constructor parameters type hinted class was not found in class "%s"!', $className), 0, $ex);
+					}
 
-                    if(!class_exists($dependencyValue)) {
-                        throw new Exception(sprintf('No class found to inject in class "%s"`s constructor parameter "%s"!', $className, $parameter->name));
-                    }
+					if(!class_exists($dependencyValue)) {
+						throw new Exception(sprintf('No class found to inject in class "%s"`s constructor parameter "%s"!', $className, $parameter->name));
+					}
 
-                    $this->dependencies[ucfirst($className)][ucfirst($parameter->name)] = $dependencyValue;
+					$this->dependencies[ucfirst($className)][ucfirst($parameter->name)] = $dependencyValue;
 					
 					// Be aware of recursion !
 					$this->getDependencies($dependencyValue);
 				}
 			}
 
-            $this->resolve();
+			$this->resolve();
 
-            if($this->instances[$className]) {
-                return $this->instances[$className];
-            }
+			if($this->instances[$className]) {
+				return $this->instances[$className];
+			}
 
-            return null;
+			return null;
 		}
 	}
 ?>
